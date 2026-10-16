@@ -26,3 +26,6 @@ runs/
 /garbages/
 /flagged/
 /experimental/
+
+# Installed Seed-VC models (via install-model.py)
+my_models/
