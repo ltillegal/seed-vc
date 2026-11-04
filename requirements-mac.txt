@@ -1,7 +1,12 @@
---extra-index-url https://download.pytorch.org/whl/cu121
-torch --pre --extra-index-url https://download.pytorch.org/whl/nightly/cpu
-torchvision --pre --extra-index-url https://download.pytorch.org/whl/nightly/cpu
-torchaudio --pre --extra-index-url https://download.pytorch.org/whl/nightly/cpu
+# Shared macOS dependencies for Seed-VC.
+#
+# PyTorch is NOT listed here: the correct wheel depends on the architecture
+# and is installed separately by ./start-mac.command.
+#   - Apple Silicon (arm64): current stable torch / torchvision / torchaudio
+#   - Intel Mac (x86_64):    torch 2.2.2 (last release with macOS x86_64 wheels)
+#
+# Manual install on macOS:
+#   pip install -r requirements-mac.txt
 accelerate
 scipy==1.13.1
 librosa==0.10.2

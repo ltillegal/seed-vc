@@ -439,7 +439,7 @@ def load_checkpoint(
                         params[key][k[len("module.") :]] = params[key][k]
                         del params[key][k]
             model_state_dict = model[key].state_dict()
-            # 过滤出形状匹配的键值对
+            # keep only the entries whose shape matches the model state dict
             filtered_state_dict = {
                 k: v
                 for k, v in params[key].items()

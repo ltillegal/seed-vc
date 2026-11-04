@@ -145,11 +145,11 @@ def merge_short_sentences_latin(sens):
 def split_sentences_zh(text, min_len=10):
     text = re.sub('[。！？；]', '.', text)
     text = re.sub('[，]', ',', text)
-    # 将文本中的换行符、空格和制表符替换为空格
+    # Replace newlines, spaces and tabs inside the text with a single space
     text = re.sub('[\n\t ]+', ' ', text)
-    # 在标点符号后添加一个空格
+    # Add a space after punctuation
     text = re.sub('([,.!?;])', r'\1 $#!', text)
-    # 分隔句子并去除前后空格
+    # Split into sentences and strip leading/trailing spaces
     # sentences = [s.strip() for s in re.split('(。|！|？|；)', text)]
     sentences = [s.strip() for s in text.split('$#!')]
     if len(sentences[-1]) == 0: del sentences[-1]

@@ -12,7 +12,7 @@ elif torch.backends.mps.is_available():
 else:
     device = torch.device("cpu")
 
-dtype = torch.float16
+dtype = torch.float16 if device.type == "cuda" else torch.float32
 
 # Global variables to store model instances
 vc_wrapper_v1 = None
@@ -103,25 +103,23 @@ def create_v1_interface():
     description = (
         "Zero-shot voice conversion with in-context learning. For local deployment please check [GitHub repository](https://github.com/Plachtaa/seed-vc) "
         "for details and updates.<br>Note that any reference audio will be forcefully clipped to 25s if beyond this length.<br> "
-        "If total duration of source and reference audio exceeds 30s, source audio will be processed in chunks.<br> "
-        "无需训练的 zero-shot 语音/歌声转换模型，若需本地部署查看[GitHub页面](https://github.com/Plachtaa/seed-vc)<br>"
-        "请注意，参考音频若超过 25 秒，则会被自动裁剪至此长度。<br>若源音频和参考音频的总时长超过 30 秒，源音频将被分段处理。")
+        "If total duration of source and reference audio exceeds 30s, source audio will be processed in chunks.")
 
     inputs = [
-        gr.Audio(type="filepath", label="Source Audio / 源音频"),
-        gr.Audio(type="filepath", label="Reference Audio / 参考音频"),
-        gr.Slider(minimum=1, maximum=200, value=10, step=1, label="Diffusion Steps / 扩散步数",
-                  info="10 by default, 50~100 for best quality / 默认为 10，50~100 为最佳质量"),
-        gr.Slider(minimum=0.5, maximum=2.0, step=0.1, value=1.0, label="Length Adjust / 长度调整",
-                  info="<1.0 for speed-up speech, >1.0 for slow-down speech / <1.0 加速语速，>1.0 减慢语速"),
+        gr.Audio(type="filepath", label="Source Audio"),
+        gr.Audio(type="filepath", label="Reference Audio"),
+        gr.Slider(minimum=1, maximum=200, value=10, step=1, label="Diffusion Steps",
+                  info="10 by default, 50~100 for best quality"),
+        gr.Slider(minimum=0.5, maximum=2.0, step=0.1, value=1.0, label="Length Adjust",
+                  info="<1.0 for speed-up speech, >1.0 for slow-down speech"),
         gr.Slider(minimum=0.0, maximum=1.0, step=0.1, value=0.7, label="Inference CFG Rate",
-                  info="has subtle influence / 有微小影响"),
-        gr.Checkbox(label="Use F0 conditioned model / 启用F0输入", value=False,
-                    info="Must set to true for singing voice conversion / 歌声转换时必须勾选"),
-        gr.Checkbox(label="Auto F0 adjust / 自动F0调整", value=True,
-                    info="Roughly adjust F0 to match target voice. Only works when F0 conditioned model is used. / 粗略调整 F0 以匹配目标音色，仅在勾选 '启用F0输入' 时生效"),
-        gr.Slider(label='Pitch shift / 音调变换', minimum=-24, maximum=24, step=1, value=0,
-                  info="Pitch shift in semitones, only works when F0 conditioned model is used / 半音数的音高变换，仅在勾选 '启用F0输入' 时生效"),
+                  info="has subtle influence"),
+        gr.Checkbox(label="Use F0 conditioned model", value=False,
+                    info="Must be enabled for singing voice conversion"),
+        gr.Checkbox(label="Auto F0 adjust", value=True,
+                    info="Roughly adjust F0 to match the target voice. Only used when the F0 conditioned model is enabled."),
+        gr.Slider(label='Pitch shift', minimum=-24, maximum=24, step=1, value=0,
+                  info="Pitch shift in semitones, only used when the F0 conditioned model is enabled"),
     ]
 
     examples = [
@@ -134,8 +132,8 @@ def create_v1_interface():
     ]
 
     outputs = [
-        gr.Audio(label="Stream Output Audio / 流式输出", streaming=True, format='mp3'),
-        gr.Audio(label="Full Output Audio / 完整输出", streaming=False, format='wav')
+        gr.Audio(label="Stream Output Audio", streaming=True, format='mp3'),
+        gr.Audio(label="Full Output Audio", streaming=False, format='wav')
     ]
 
     return gr.Interface(
@@ -157,24 +155,19 @@ def create_v2_interface():
         "If total duration of source and reference audio exceeds 30s, source audio will be processed in chunks.<br> "
         "Please click the 'convert style/emotion/accent' checkbox to convert the style, emotion, or accent of the source audio, or else only timbre conversion will be performed.<br> "
         "Click the 'anonymization only' checkbox will ignore reference audio but convert source to an 'average voice' determined by model itself.<br> "
-        "无需训练的 zero-shot 语音/口音转换模型，若需本地部署查看[GitHub页面](https://github.com/Plachtaa/seed-vc)<br>"
-        "请注意，参考音频若超过 25 秒，则会被自动裁剪至此长度。<br>若源音频和参考音频的总时长超过 30 秒，源音频将被分段处理。"
-        "<br>请勾选 'convert style/emotion/accent' 以转换源音频的风格、情感或口音，否则仅执行音色转换。<br>"
-        "勾选 'anonymization only' 会无视参考音频而将源音频转换为某种由模型自身决定的 '平均音色'。<br>"
-
         "Credits to [Vevo](https://github.com/open-mmlab/Amphion/tree/main/models/vc/vevo)"
         )
     inputs = [
-        gr.Audio(type="filepath", label="Source Audio / 源音频"),
-        gr.Audio(type="filepath", label="Reference Audio / 参考音频"),
-        gr.Slider(minimum=1, maximum=200, value=30, step=1, label="Diffusion Steps / 扩散步数",
-                  info="30 by default, 50~100 for best quality / 默认为 30，50~100 为最佳质量"),
-        gr.Slider(minimum=0.5, maximum=2.0, step=0.1, value=1.0, label="Length Adjust / 长度调整",
-                  info="<1.0 for speed-up speech, >1.0 for slow-down speech / <1.0 加速语速，>1.0 减慢语速"),
+        gr.Audio(type="filepath", label="Source Audio"),
+        gr.Audio(type="filepath", label="Reference Audio"),
+        gr.Slider(minimum=1, maximum=200, value=30, step=1, label="Diffusion Steps",
+                  info="30 by default, 50~100 for best quality"),
+        gr.Slider(minimum=0.5, maximum=2.0, step=0.1, value=1.0, label="Length Adjust",
+                  info="<1.0 for speed-up speech, >1.0 for slow-down speech"),
         gr.Slider(minimum=0.0, maximum=1.0, step=0.1, value=0.0, label="Intelligibility CFG Rate",
-                  info="controls pronunciation intelligibility / 控制发音清晰度"),
+                  info="controls pronunciation intelligibility"),
         gr.Slider(minimum=0.0, maximum=1.0, step=0.1, value=0.7, label="Similarity CFG Rate",
-                  info="controls similarity to reference audio / 控制与参考音频的相似度"),
+                  info="controls similarity to reference audio"),
         gr.Slider(minimum=0.1, maximum=1.0, step=0.1, value=0.9, label="Top-p",
                   info="AR model sampling top P"),
         gr.Slider(minimum=0.1, maximum=2.0, step=0.1, value=1.0, label="Temperature",
@@ -192,8 +185,8 @@ def create_v2_interface():
     ]
 
     outputs = [
-        gr.Audio(label="Stream Output Audio / 流式输出", streaming=True, format='mp3'),
-        gr.Audio(label="Full Output Audio / 完整输出", streaming=False, format='wav')
+        gr.Audio(label="Stream Output Audio", streaming=True, format='mp3'),
+        gr.Audio(label="Full Output Audio", streaming=False, format='wav')
     ]
 
     return gr.Interface(

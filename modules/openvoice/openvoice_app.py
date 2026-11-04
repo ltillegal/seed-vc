@@ -191,7 +191,7 @@ wrapped_markdown_content = f"<div style='border: 1px solid #000; padding: 10px;'
 
 examples = [
     [
-        "今天天气真好，我们一起出去吃饭吧。",
+        "Today the weather is great, let's go out for lunch together.",
         'default',
         "resources/demo_speaker1.mp3",
         True,
