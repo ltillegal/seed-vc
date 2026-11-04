@@ -119,6 +119,14 @@ ARCH="$(uname -m)"
 VENV_PY="$VENV_DIR/bin/python"
 
 ensure_venv() {
+  if [ "$DRY_RUN" = "1" ]; then
+    if [ ! -d "$VENV_DIR" ]; then
+      say "Creating virtual environment in $VENV_DIR"
+    fi
+    VENV_PY="$VENV_DIR/bin/python"
+    return 0
+  fi
+
   if [ -d "$VENV_DIR" ]; then
     if [ ! -x "$VENV_PY" ] || ! python_ok "$VENV_PY"; then
       warn "existing .venv uses an unsupported Python version, recreating it"
@@ -128,10 +136,6 @@ ensure_venv() {
 
   if [ ! -d "$VENV_DIR" ]; then
     say "Creating virtual environment in $VENV_DIR"
-    if [ "$DRY_RUN" = "1" ]; then
-      VENV_PY="$VENV_DIR/bin/python"
-      return 0
-    fi
     "$PYTHON" -m venv "$VENV_DIR" || die "failed to create the virtual environment"
   fi
 
@@ -199,8 +203,8 @@ resolve_model() {
   local dir="$1"
   [ -d "$dir" ] || die "model directory not found: $dir"
 
-  CHECKPOINT="$(find "$dir" -maxdepth 3 -type f -name '*.pth' | head -n 1)"
-  CONFIG="$(find "$dir" -maxdepth 3 -type f \( -name 'config*.yml' -o -name 'config*.yaml' \) | head -n 1)"
+  CHECKPOINT="$(find "$dir" -maxdepth 3 -type f -name '*.pth' | awk 'NR == 1')"
+  CONFIG="$(find "$dir" -maxdepth 3 -type f \( -name 'config*.yml' -o -name 'config*.yaml' \) | awk 'NR == 1')"
 
   [ -n "$CHECKPOINT" ] || die "no .pth file found in $dir"
   [ -n "$CONFIG" ]     || die "no config*.yml/.yaml file found in $dir"
