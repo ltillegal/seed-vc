@@ -121,7 +121,11 @@ def custom_infer(model_set,
         S_alt, ylens=target_lengths , n_quantizers=3, f0=None
     )[0]
     cat_condition = torch.cat([prompt_condition, cond], dim=1)
-    with torch.autocast(device_type=device.type, dtype=torch.float16 if fp16 else torch.float32):
+    if device.type == "mps":
+        _autocast_device = "cpu"
+    else:
+        _autocast_device = device.type
+    with torch.autocast(device_type=_autocast_device, dtype=torch.float16 if fp16 else torch.float32):
         vc_target = model.cfm.inference(
             cat_condition,
             torch.LongTensor([cat_condition.size(1)]).to(mel2.device),
