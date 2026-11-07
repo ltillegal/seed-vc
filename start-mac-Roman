@@ -1,7 +1,13 @@
 #!/bin/bash
 #
 # Start Seed-VC with the Roman voice model.
-# Usage: ./start-mac-Roman
+#
+# The UI is chosen automatically from the model config:
+#   f0_condition: true  -> singing-voice UI (app_svc.py), with Pitch shift
+#   f0_condition: false -> voice-conversion UI (app_vc.py), no pitch control
+#
+# Override with:  SEEDVC_MODE=vc ./start-mac-Roman
+#                 SEEDVC_MODE=svc ./start-mac-Roman
 #
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -28,12 +34,31 @@ if [ -z "$CONFIG" ]; then
   exit 1
 fi
 
-echo "==> Model:      $MODEL_DIR"
-echo "    checkpoint: $CHECKPOINT"
-echo "    config:     $CONFIG"
+# F0-conditioned models get the pitch / auto-F0 controls.
+F0_CONDITION="$(grep -m1 -E '^[[:space:]]*f0_condition:' "$CONFIG" | grep -ioE 'true|false' | head -1 | tr 'A-Z' 'a-z')"
+MODE="vc"
+if [ "$F0_CONDITION" = "true" ]; then
+  MODE="svc"
+fi
+MODE="${SEEDVC_MODE:-$MODE}"
+
+echo "==> Model:       $MODEL_DIR"
+echo "    checkpoint:  $CHECKPOINT"
+echo "    config:      $CONFIG"
+echo "    f0_condition: ${F0_CONDITION:-unknown}"
+echo "    UI mode:     $MODE"
+
+if [ "$MODE" = "svc" ]; then
+  echo "==> Pitch shift (±24 semitones) and Auto F0 adjust are available."
+  echo "    For speech: Auto F0 adjust on, Pitch shift 0 (or ±12 for gender)."
+else
+  echo "==> This model is not F0-conditioned: no pitch control."
+  echo "    If the config is wrong, run with: SEEDVC_MODE=svc ./start-mac-Roman"
+fi
+
 echo "==> In the UI: Diffusion Steps 40, CFG 0.7, reference 8-10 s"
 
 # Keep float32 on Apple Silicon (fp16 on MPS can add artifacts).
 export FP16="${FP16:-0}"
 
-exec ./start-mac.command vc "$MODEL_DIR"
+exec ./start-mac.command "$MODE" "$MODEL_DIR"
