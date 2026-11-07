@@ -67,14 +67,21 @@ source .venv/bin/activate
 pip install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1     # Apple Silicon
 pip install torch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2    # Intel Mac
 pip install -r requirements-mac.txt
-python app_vc.py --fp16 False
+python app_vc.py --fp16 True
 ```
+
+On Apple Silicon (MPS), `--fp16 True` is safe: `autocast` is automatically disabled for the MPS backend (see the `fix(mps)` commit), so the model runs in float32 while tensors stay on the GPU. On Intel Macs keep `--fp16 False`.
 
 ## Windows and Linux
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate      # Windows: .venv\Scripts\activate
+# Install PyTorch first (CUDA or CPU build for your system):
+pip install torch torchvision torchaudio
+# Then the rest. requirements.txt contains a `--pre` flag that some pip/uv
+# versions reject; if that happens, remove the torch line from
+# requirements.txt (torch is already installed above) and re-run.
 pip install -r requirements.txt
 python app_vc.py
 ```
@@ -94,6 +101,13 @@ Models are downloaded automatically unless `--checkpoint` and `--config` are giv
 | v2.0 | [hubert-bsqvae-small](https://huggingface.co/Plachta/Seed-VC/tree/main/v2) | Voice / accent conversion | 22.05 kHz | suppresses source speaker traits |
 
 Configuration files live in `configs/presets/` (V1) and `configs/v2/` (V2).
+
+### Pitch shift
+
+The singing voice conversion UI (`app_svc.py`) exposes a **Pitch shift** slider
+(−24 to +24 semitones). It only has an effect when the F0-conditioned model
+is in use, which is the default for singing models. Set it to `0` for speech-like
+output; use positive values to raise the voice and negative values to lower it.
 
 ## Usage
 
