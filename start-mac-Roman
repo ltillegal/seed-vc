@@ -1,0 +1,39 @@
+#!/bin/bash
+#
+# Start Seed-VC with the Roman voice model.
+# Usage: ./start-mac-Roman
+#
+set -euo pipefail
+cd "$(dirname "$0")"
+
+MODEL_DIR="my_models/Roman_lt.seed"
+
+if [ ! -d "$MODEL_DIR" ]; then
+  echo "Model directory not found: $MODEL_DIR" >&2
+  echo "Available models:" >&2
+  ls -1 my_models >&2 2>/dev/null || true
+  exit 1
+fi
+
+CHECKPOINT="$(find "$MODEL_DIR" -maxdepth 3 -type f -name '*.pth' -print -quit)"
+CONFIG="$(find "$MODEL_DIR" -maxdepth 3 -type f \( -name 'config*.yml' -o -name 'config*.yaml' \) -print -quit)"
+
+if [ -z "$CHECKPOINT" ]; then
+  echo "No .pth checkpoint found in $MODEL_DIR" >&2
+  exit 1
+fi
+
+if [ -z "$CONFIG" ]; then
+  echo "No config*.yml found in $MODEL_DIR" >&2
+  exit 1
+fi
+
+echo "==> Model:      $MODEL_DIR"
+echo "    checkpoint: $CHECKPOINT"
+echo "    config:     $CONFIG"
+echo "==> In the UI: Diffusion Steps 40, CFG 0.7, reference 8-10 s"
+
+# Keep float32 on Apple Silicon (fp16 on MPS can add artifacts).
+export FP16="${FP16:-0}"
+
+exec ./start-mac.command vc "$MODEL_DIR"
