@@ -1,5 +1,7 @@
 # Seed-VC
 
+[![Donate](https://img.shields.io/badge/Donate-PayPal-00457C?logo=paypal&logoColor=white)](https://www.paypal.com/donate/?business=0eskimo0%40gmail.com&item_name=Support&currency_code=USD)
+
 Zero-shot voice conversion, singing voice conversion and real-time voice conversion
 with in-context learning. A reference clip of 1–30 seconds is enough — no training required.
 
