@@ -21,6 +21,27 @@ demo: [Hugging Face](https://huggingface.co/spaces/Plachta/Seed-VC),
 - The Chinese and Japanese README translations were dropped in favour of this
   single English document.
 
+## One-click install (.dmg)
+
+Download `Seed-VC-<version>-macos.dmg` from the
+[Releases](https://github.com/ltillegal/seed-vc/releases/latest) page, drag
+**Seed-VC.app** into `/Applications` and launch it.
+
+On first start the app copies the sources to `~/Library/Application Support/Seed-VC`
+and delegates everything else to `start-mac.command`: it creates the venv, installs
+the PyTorch build matching your Mac (MPS on Apple Silicon, `torch 2.2.2` on Intel),
+installs `requirements-mac.txt` and opens the UI at <http://127.0.0.1:7860>.
+It offers a menu with the four UIs (VC / SVC / V2 / integrated) and remembers your
+choice; override it with `SEEDVC_MODE=vc ./Seed-VC.app/Contents/MacOS/SeedVC`.
+
+The build is not notarized, so macOS may complain on first launch — right-click the
+app → **Open**, or:
+
+    xattr -dr com.apple.quarantine /Applications/Seed-VC.app
+
+Custom models installed with `install-model.py` live in
+`~/Library/Application Support/Seed-VC/app/my_models` and survive upgrades.
+
 ## Quick start (macOS)
 
 Requirements: macOS 12+, Python 3.10 or 3.11, [Homebrew](https://brew.sh) (recommended).

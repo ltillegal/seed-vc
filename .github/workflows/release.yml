@@ -1,0 +1,54 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to attach the .dmg to (vX.Y.Z)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  dmg:
+    name: macOS .dmg
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Launcher syntax
+        run: bash -n packaging/launcher.sh
+
+      - name: Build .dmg
+        id: build
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          if [ -n "${{ inputs.tag }}" ]; then VERSION="${{ inputs.tag }}"; VERSION="${VERSION#v}"; fi
+          bash packaging/build-dmg.sh --version "$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke test the bundle
+        run: |
+          DMG="dist/Seed-VC-${{ steps.build.outputs.version }}-macos.dmg"
+          hdiutil verify "$DMG" | tail -1
+          MP=$(hdiutil attach "$DMG" -nobrowse -readonly | grep -o '/Volumes/.*' | head -1)
+          trap 'hdiutil detach "$MP" -quiet' EXIT
+          test -x "$MP/Seed-VC.app/Contents/MacOS/SeedVC"
+          test -x "$MP/Seed-VC.app/Contents/Resources/app/start-mac.command"
+          test -f "$MP/Seed-VC.app/Contents/Resources/app/app_vc.py"
+          test -f "$MP/Seed-VC.app/Contents/Resources/icon.icns"
+          codesign --verify --deep --strict "$MP/Seed-VC.app"
+          grep -q "^VERSION=\"${{ steps.build.outputs.version }}\"" "$MP/Seed-VC.app/Contents/MacOS/SeedVC"
+          echo "bundle ok"
+
+      - name: Publish release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          generate_release_notes: true
+          files: |
+            dist/Seed-VC-*-macos.dmg
+            dist/Seed-VC-*-macos.dmg.sha256
