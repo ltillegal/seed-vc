@@ -216,3 +216,13 @@ The project is distributed under the licence in [LICENSE](LICENSE), the original
 work belongs to the Seed-VC authors (Plachtaa and contributors). Thanks to
 Amphion/Vevo, MegaTTS3, ASTRAL-quantization, RVC and SEED-TTS for the ideas and
 components this project builds on.
+
+---
+
+## Donate
+
+If this project is useful, you can support development via PayPal:
+
+[![Donate](https://img.shields.io/badge/Donate-PayPal-00457C?logo=paypal&logoColor=white)](https://www.paypal.com/donate/?business=0eskimo0%40gmail.com&item_name=Support&currency_code=USD)
+
+PayPal: **0eskimo0@gmail.com**
