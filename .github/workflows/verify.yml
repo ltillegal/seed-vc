@@ -1,3 +1,4 @@
+# Verification checks for pull requests and main-branch pushes.
 name: verify
 
 on:
