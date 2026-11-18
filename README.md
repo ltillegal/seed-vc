@@ -1,6 +1,6 @@
 # Seed-VC
 
-[![Donate](https://img.shields.io/badge/Donate-PayPal-00457C?logo=paypal&logoColor=white)](https://www.paypal.com/donate/?business=0eskimo0%40gmail.com&item_name=Support&currency_code=USD)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-00457C?logo=paypal&logoColor=white)](https://www.paypal.com/ncp/payment/MAMKZM5TTVN5U)
 
 Zero-shot voice conversion, singing voice conversion and real-time voice conversion
 with in-context learning. A reference clip of 1–30 seconds is enough — no training required.
@@ -244,6 +244,6 @@ components this project builds on.
 
 If this project is useful, you can support development via PayPal:
 
-[![Donate](https://img.shields.io/badge/Donate-PayPal-00457C?logo=paypal&logoColor=white)](https://www.paypal.com/donate/?business=0eskimo0%40gmail.com&item_name=Support&currency_code=USD)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-00457C?logo=paypal&logoColor=white)](https://www.paypal.com/ncp/payment/MAMKZM5TTVN5U)
 
-PayPal: **0eskimo0@gmail.com**
+PayPal: [Donate](https://www.paypal.com/ncp/payment/MAMKZM5TTVN5U)
