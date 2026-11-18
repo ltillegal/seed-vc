@@ -30,6 +30,11 @@ jobs:
           bash packaging/build-dmg.sh --version "$VERSION"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
+      - name: Verify checksum
+        run: |
+          cd dist
+          shasum -a 256 -c "Seed-VC-${{ steps.build.outputs.version }}-macos.dmg.sha256"
+
       - name: Smoke test the bundle
         run: |
           DMG="dist/Seed-VC-${{ steps.build.outputs.version }}-macos.dmg"
