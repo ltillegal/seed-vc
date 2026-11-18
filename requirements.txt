@@ -1,10 +1,7 @@
-torch --pre --index-url https://download.pytorch.org/whl/nightly/cu126
-torchvision --pre --index-url https://download.pytorch.org/whl/nightly/cu126
-torchaudio --pre --index-url https://download.pytorch.org/whl/nightly/cu126
+# PyTorch is intentionally not pinned here: install the correct build for your
+# platform first (see README.md). Keeping the torch stack out of this file
+# avoids conflicting nightly/stable index URLs and pip resolver errors.
 accelerate
-torch==2.4.0
-torchvision==0.19.0
-torchaudio==2.4.0
 scipy==1.13.1
 librosa==0.10.2
 huggingface-hub>=0.28.1
