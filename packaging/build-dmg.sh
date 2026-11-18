@@ -82,4 +82,9 @@ hdiutil create -volname "$APP_NAME" -srcfolder "$STAGE" -ov -format UDZO "$DMG" 
 rm -rf "$STAGE"
 
 echo "==> $DMG ($(du -h "$DMG" | cut -f1))"
-shasum -a 256 "$DMG" | tee "$DMG.sha256"
+DMG_NAME="$(basename "$DMG")"
+(
+  cd "$OUT"
+  shasum -a 256 "$DMG_NAME" > "$DMG_NAME.sha256"
+)
+cat "$DMG.sha256"
