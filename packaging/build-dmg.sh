@@ -2,7 +2,7 @@
 #
 # Builds a drag-to-Applications .dmg with the "Seed-VC" launcher app.
 #
-#   ./packaging/build-dmg.sh --version 0.1.0
+#   ./packaging/build-dmg.sh --version 0.1.1
 #
 # The .app embeds this repository (Resources/app). On first launch the launcher
 # copies it to ~/Library/Application Support/Seed-VC and delegates the Python
@@ -10,7 +10,7 @@
 #
 set -euo pipefail
 
-VERSION="0.1.0"
+VERSION="0.1.1"
 OUT="dist"
 
 while [ $# -gt 0 ]; do
