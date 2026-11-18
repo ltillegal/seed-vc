@@ -14,6 +14,10 @@ where <name> is the archive's base name without extension.
 
 On success, prints the exact `python app_vc.py ...` command to run
 Seed-VC with the installed model.
+
+ZIP archives are validated before extraction: absolute paths, parent directory
+references, drive-qualified names and duplicate destinations are rejected so a
+malicious archive cannot write outside the target model directory.
 """
 import argparse
 import os
@@ -29,9 +33,43 @@ def fail(msg):
     sys.exit(1)
 
 
+def _safe_destination(target_root, member_name):
+    """Return a verified absolute destination for one ZIP member."""
+    normalized = member_name.replace("\\", "/")
+    has_drive = len(normalized) >= 2 and normalized[0].isalpha() and normalized[1] == ":"
+
+    if not normalized or normalized.startswith("/") or has_drive:
+        raise ValueError(f"unsafe path in archive: {member_name!r}")
+
+    parts = [part for part in normalized.split("/") if part not in ("", ".")]
+    if not parts or ".." in parts:
+        raise ValueError(f"unsafe path in archive: {member_name!r}")
+
+    destination = os.path.realpath(os.path.join(target_root, *parts))
+    if os.path.commonpath((target_root, destination)) != target_root:
+        raise ValueError(f"unsafe path in archive: {member_name!r}")
+    return destination
+
+
 def install_from_zip(zip_path, target_dir):
+    """Extract a ZIP archive into target_dir without path traversal."""
+    target_root = os.path.realpath(target_dir)
+    seen = set()
+
     with zipfile.ZipFile(zip_path, "r") as z:
-        z.extractall(target_dir)
+        for member in z.infolist():
+            destination = _safe_destination(target_root, member.filename)
+            if destination in seen:
+                raise ValueError(f"duplicate path in archive: {member.filename!r}")
+            seen.add(destination)
+
+            if member.is_dir():
+                os.makedirs(destination, exist_ok=True)
+                continue
+
+            os.makedirs(os.path.dirname(destination), exist_ok=True)
+            with z.open(member) as source, open(destination, "wb") as target:
+                shutil.copyfileobj(source, target)
 
 
 def install_from_dir(src_dir, target_dir):

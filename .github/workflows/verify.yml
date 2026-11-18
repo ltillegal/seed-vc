@@ -1,0 +1,144 @@
+name: verify
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install validation tools
+        run: python -m pip install --quiet pyyaml
+
+      - name: Python syntax
+        run: python -m compileall -q .
+
+      - name: Shell syntax
+        run: |
+          set -euo pipefail
+          find . -type f \( -name '*.sh' -o -name '*.command' -o -name 'start-mac-Roman' \) \
+            -not -path './.git/*' -print0 | xargs -0 -r -n1 bash -n
+
+      - name: YAML and JSON
+        run: |
+          python - <<'PY'
+          import json
+          import pathlib
+          import sys
+
+          import yaml
+
+          problems = []
+          for path in pathlib.Path('.').rglob('*'):
+              if not path.is_file() or '.git' in path.parts:
+                  continue
+              if path.suffix in {'.yaml', '.yml'}:
+                  try:
+                      yaml.safe_load(path.read_text(encoding='utf-8'))
+                  except Exception as exc:
+                      problems.append(f'{path}: {exc}')
+              elif path.suffix == '.json':
+                  try:
+                      json.loads(path.read_text(encoding='utf-8'))
+                  except Exception as exc:
+                      problems.append(f'{path}: {exc}')
+
+          if problems:
+              print('\n'.join(problems), file=sys.stderr)
+              sys.exit(1)
+          print('YAML/JSON ok')
+          PY
+
+      - name: Text guards
+        run: |
+          python - <<'PY'
+          import pathlib
+          import re
+          import subprocess
+          import sys
+
+          tracked = subprocess.check_output(['git', 'ls-files', '-z']).decode().split('\0')
+          cjk = re.compile(
+              r'[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\u3040-\u30ff\uac00-\ud7af]'
+          )
+          cyrillic = re.compile(r'[\u0400-\u04ff]')
+          code_suffixes = {'.py', '.sh', '.command', '.yaml', '.yml'}
+          code_names = {'start-mac-Roman'}
+
+          problems = []
+          for name in tracked:
+              if not name:
+                  continue
+              path = pathlib.Path(name)
+              if path.name == 'LICENSE':
+                  continue
+              try:
+                  text = path.read_text(encoding='utf-8')
+              except (UnicodeDecodeError, OSError):
+                  continue
+              if cjk.search(text):
+                  problems.append(f'CJK text in {name}')
+              if (path.suffix in code_suffixes or path.name in code_names) and cyrillic.search(text):
+                  problems.append(f'Cyrillic text in {name}')
+
+          if problems:
+              print('\n'.join(problems), file=sys.stderr)
+              sys.exit(1)
+          print('text guards ok')
+          PY
+
+      - name: Dependency guards
+        run: |
+          set -euo pipefail
+          ! grep -Eq '^(torch|torchvision|torchaudio)([[:space:]]|[=><~])' requirements.txt
+          ! grep -Eq -- '--pre|--index-url' requirements.txt
+          ! grep -q 'opneai-whisper' conda-nix-vc-py310.yaml
+          grep -q 'openai-whisper' conda-nix-vc-py310.yaml
+          python - <<'PY'
+          import collections
+          import pathlib
+          import re
+          import sys
+
+          names = []
+          for line in pathlib.Path('requirements.txt').read_text(encoding='utf-8').splitlines():
+              line = line.split('#', 1)[0].strip()
+              if not line or line.startswith('-'):
+                  continue
+              match = re.match(r'[A-Za-z0-9_.-]+', line)
+              if match:
+                  names.append(match.group(0).lower())
+
+          duplicates = sorted(name for name, count in collections.Counter(names).items() if count > 1)
+          if duplicates:
+              print('duplicate requirements: ' + ', '.join(duplicates), file=sys.stderr)
+              sys.exit(1)
+          print('dependency guards ok')
+          PY
+
+      - name: Donation link guard
+        run: |
+          set -euo pipefail
+          URL='https://www.paypal.com/ncp/payment/MAMKZM5TTVN5U?locale.x=en_US&country.x=US'
+          grep -qF "$URL" README.md
+          grep -qF "$URL" .github/FUNDING.yml
+          if grep -RInE 'https://www\.paypal\.com/ncp/payment/MAMKZM5TTVN5U([^?]|$)' --exclude-dir=.git .; then
+            echo 'plain PayPal URL found' >&2
+            exit 1
+          fi
+          echo 'donation link ok'
+
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v

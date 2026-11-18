@@ -30,8 +30,8 @@ die()  { printf '\n%serror:%s %s\n' "$c_red" "$c_off" "$*" >&2; exit 1; }
 
 printf '\n%sSeed-VC %s%s — macOS\n\n' "$c_cyan" "$VERSION" "$c_off"
 
-command -v brew >/dev/null 2>&1 || die "Нужен Homebrew. Установите: https://brew.sh, затем запустите снова."
-[ -d "$BUNDLED_SRC" ] || die "В приложении нет исходников ($BUNDLED_SRC). Скачайте .dmg заново."
+command -v brew >/dev/null 2>&1 || die "Homebrew is required. Install it from https://brew.sh, then run again."
+[ -d "$BUNDLED_SRC" ] || die "Bundled sources are missing ($BUNDLED_SRC). Download the .dmg again."
 
 mkdir -p "$SUPPORT" "$SUPPORT/logs"
 
@@ -48,15 +48,15 @@ find_python() {
   return 1
 }
 if ! PY="$(find_python)"; then
-  step "Python 3.10+ не найден — ставлю python@3.11 через Homebrew"
-  brew install python@3.11 >>"$SUPPORT/brew.log" 2>&1 || die "brew install python@3.11 не удался"
+  step "Python 3.10+ not found - installing python@3.11 via Homebrew"
+  brew install python@3.11 >>"$SUPPORT/brew.log" 2>&1 || die "brew install python@3.11 failed"
   PY="$(find_python || true)"
-  [ -n "$PY" ] || die "Python 3.10/3.11 так и не появился"
+  [ -n "$PY" ] || die "Python 3.10/3.11 still not available"
 fi
 ok "Python: $PY ($("$PY" -c 'import sys; print(sys.version.split()[0])'))"
 
 # Sources: refresh on every version, but keep .venv, my_models and the choice.
-step "Раскладываю исходники в $SRC"
+step "Installing sources into $SRC"
 mkdir -p "$SRC"
 rsync -a --delete \
   --exclude '.venv' \
@@ -65,10 +65,10 @@ rsync -a --delete \
   --exclude 'dist' \
   --exclude 'packaging' \
   --exclude '__pycache__' \
-  "$BUNDLED_SRC/" "$SRC/" >"$SUPPORT/logs/rsync.log" 2>&1 || die "не удалось скопировать исходники"
+  "$BUNDLED_SRC/" "$SRC/" >"$SUPPORT/logs/rsync.log" 2>&1 || die "failed to copy sources"
 mkdir -p "$SRC/my_models"
 chmod +x "$SRC/start-mac.command" "$SRC/start-mac-Roman" 2>/dev/null || true
-ok "исходники на месте"
+ok "sources ready"
 
 # Mode: explicit override > remembered choice > interactive menu.
 mode_from_label() {
@@ -85,25 +85,25 @@ mode_from_label() {
 MODE="${SEEDVC_MODE:-}"
 if [ -z "$MODE" ]; then
   default="$(cat "$CHOICE_FILE" 2>/dev/null || echo vc)"
-  printf 'Что открыть?\n'
-  printf '  1) Voice conversion (vc)%s\n' "$([ "$default" = vc ] && echo '  ← по умолчанию')"
-  printf '  2) Singing voice conversion (svc)%s\n' "$([ "$default" = svc ] && echo '  ← по умолчанию')"
-  printf '  3) V2 — голос и акцент%s\n' "$([ "$default" = v2 ] && echo '  ← по умолчанию')"
-  printf '  4) Integrated UI (V1 + V2)%s\n' "$([ "$default" = all ] && echo '  ← по умолчанию')"
-  printf '  5) Проверить окружение\n'
-  printf 'Номер [Enter = %s]: ' "$default"
+  printf 'What should be opened?\n'
+  printf '  1) Voice conversion (vc)%s\n' "$([ "$default" = vc ] && echo '  (default)')"
+  printf '  2) Singing voice conversion (svc)%s\n' "$([ "$default" = svc ] && echo '  (default)')"
+  printf '  3) V2 - voice and accent%s\n' "$([ "$default" = v2 ] && echo '  (default)')"
+  printf '  4) Integrated UI (V1 + V2)%s\n' "$([ "$default" = all ] && echo '  (default)')"
+  printf '  5) Check environment\n'
+  printf 'Number [Enter = %s]: ' "$default"
   choice=""
   read -r -t 15 choice || true
   printf '\n'
   [ -z "$choice" ] && choice="$default"
   MODE="$(mode_from_label "$choice")"
-  [ -n "$MODE" ] || die "неизвестный вариант: $choice"
+  [ -n "$MODE" ] || die "unknown option: $choice"
   echo "$MODE" > "$CHOICE_FILE"
 else
-  ok "режим из SEEDVC_MODE: $MODE"
+  ok "mode from SEEDVC_MODE: $MODE"
 fi
 
-cd "$SRC" || die "нет каталога $SRC"
+cd "$SRC" || die "no directory $SRC"
 
 if [ "$MODE" = "check" ]; then
   exec ./start-mac.command check

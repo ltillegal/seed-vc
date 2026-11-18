@@ -102,15 +102,19 @@ python -m venv .venv
 source .venv/bin/activate      # Windows: .venv\Scripts\activate
 # Install PyTorch first (CUDA or CPU build for your system):
 pip install torch torchvision torchaudio
-# Then the rest. requirements.txt contains a `--pre` flag that some pip/uv
-# versions reject; if that happens, remove the torch line from
-# requirements.txt (torch is already installed above) and re-run.
+# For CUDA 12.1 wheels, for example:
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+# Then the rest. requirements.txt intentionally contains no torch pins.
 pip install -r requirements.txt
 python app_vc.py
 ```
 
 A CUDA GPU is strongly recommended. On Windows you may install
 `triton-windows==3.2.0.post13` to use `--compile` with the V2 model.
+
+The vendored `campplus_cn_common.bin` is kept because legacy preset configs
+reference it by relative path. Normal inference downloads the same checkpoint
+from Hugging Face into `./checkpoints`.
 
 ## Models
 
